@@ -1,0 +1,9 @@
+[package]
+name = "imagr"
+version = "0.1.0"
+authors = ["Reilly Tucker Siemens <reilly@tuckersiemens.com>"]
+
+[dependencies]
+hyper = "0.12.5"
+hyper-tls = "0.3.0"
+pretty_env_logger = "0.2.3"
