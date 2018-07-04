@@ -16,7 +16,7 @@ use std::io::{self, Write};
 use std::process;
 
 use failure::Error;
-use futures::future::{self, Future};
+use futures::{Future, Stream};
 
 use http::uri::{self, Uri};
 use hyper::client::{connect::Connect, HttpConnector};
@@ -131,6 +131,16 @@ fn tumbl<C>(
 where
     C: 'static + Connect,
 {
-    let uri = photo_posts_uri(api_key, blog_identifier)?;
-    Ok(client.get(uri).map(|content| println!("{:#?}", content)))
+    let uri = photo_posts_uri(blog_identifier, api_key)?;
+    println!("{}", uri);
+    Ok(client.get(uri).and_then(|response| {
+        println!("Response: {}", response.status());
+        println!("Headers: {:#?}", response.headers());
+
+        response.into_body().for_each(|chunk| {
+            io::stdout()
+                .write_all(&chunk)
+                .map_err(|_e| panic!("ahhhhhhh!"))
+        })
+    }))
 }
