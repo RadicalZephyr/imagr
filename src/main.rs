@@ -1,36 +1,44 @@
 // #![deny(warnings)]
+extern crate failure;
 extern crate hyper;
 extern crate hyper_tls;
 extern crate pretty_env_logger;
 
+#[macro_use]
+extern crate failure_derive;
+
 use std::env;
 use std::io::{self, Write};
+use std::process;
+
+use failure::Error;
 
 use hyper::rt::{self, Future, Stream};
 use hyper::{client::HttpConnector, Client};
 use hyper_tls::HttpsConnector;
 
-#[derive(Debug)]
-enum Error {
-    InvalidArgument,
-    HyperTls(hyper_tls::Error),
-}
+#[derive(Debug, Fail)]
+#[fail(display = "invalid argument")]
+struct InvalidArgument;
 
-impl From<hyper_tls::Error> for Error {
-    fn from(error: hyper_tls::Error) -> Self {
-        Error::HyperTls(error)
+fn main() {
+    match run() {
+        Ok(()) => {}
+        Err(err) => {
+            println!("Usage: imagr <blog_identifier>\nError: {}", err);
+            process::exit(1);
+        }
     }
 }
 
-fn main() -> Result<(), Error> {
+fn run() -> Result<(), Error> {
     pretty_env_logger::init();
 
     // Some simple CLI args requirements...
     let blog_identifier = match env::args().nth(1) {
         Some(blog_identifier) => blog_identifier,
         None => {
-            println!("Usage: imagr <blog_identifier>");
-            return Err(Error::InvalidArgument);
+            return Err(InvalidArgument.into());
         }
     };
 

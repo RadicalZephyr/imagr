@@ -7,3 +7,5 @@ authors = ["Reilly Tucker Siemens <reilly@tuckersiemens.com>"]
 hyper = "0.12.5"
 hyper-tls = "0.3.0"
 pretty_env_logger = "0.2.3"
+failure = "0.1"
+failure_derive = "0.1"
