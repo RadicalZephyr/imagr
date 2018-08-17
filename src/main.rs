@@ -154,7 +154,7 @@ where
         });
 
     let res = res.and_then(|bytes| {
-        let json: Response = serde_json::de::from_slice(&bytes).unwrap();
+        let json: BigResponse = serde_json::de::from_slice(&bytes).unwrap();
         Ok(())
     });
 
@@ -174,12 +174,13 @@ struct Response {
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 struct Post {
-    id: String,
+    id: usize,
     photos: Vec<Photo>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 struct Photo {
+    #[serde(rename = "alt_sizes")]
     sizes: Vec<PhotoSize>,
 }
 
@@ -202,6 +203,6 @@ mod tests {
 
     #[test]
     fn test_full_parse() {
-        let response: Response = serde_json::de::from_str(include_str!("response.json")).unwrap();
+        let response: BigResponse = serde_json::de::from_str(include_str!("response.json")).unwrap();
     }
 }
