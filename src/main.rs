@@ -1,4 +1,3 @@
-// #![deny(warnings)]
 extern crate failure;
 extern crate futures;
 extern crate http;
@@ -86,7 +85,7 @@ fn run() -> Result<(), Error> {
     let client = build_client()?;
 
     let future = tumbl(client, api_key, blog_identifier)?;
-    rt::run(future.map_err(handle_connection_error));
+    rt::run(future);
 
     Ok(())
 }
@@ -127,20 +126,26 @@ fn tumbl<C>(
     client: Client<C>,
     api_key: String,
     blog_identifier: String,
-) -> Result<impl Future<Item = (), Error = hyper::Error>, uri::InvalidUri>
+) -> Result<impl Future<Item = (), Error = ()>, uri::InvalidUri>
 where
     C: 'static + Connect,
 {
     let uri = photo_posts_uri(blog_identifier, api_key)?;
     println!("{}", uri);
-    Ok(client.get(uri).and_then(|response| {
+    let res = client.get(uri)
+        .map_err(handle_connection_error)
+        .and_then(|response| {
         println!("Response: {}", response.status());
         println!("Headers: {:#?}", response.headers());
 
-        response.into_body().for_each(|chunk| {
-            io::stdout()
-                .write_all(&chunk)
-                .map_err(|_e| panic!("ahhhhhhh!"))
+        response.into_body()
+            .map_err(|_| ())
+            .fold(Vec::new(), |mut acc, chunk| {
+            acc.extend_from_slice(&chunk);
+            Ok(acc)
         })
-    }))
+    });
+
+    let res = res.and_then(|_| Ok(()));
+    Ok(res)
 }
