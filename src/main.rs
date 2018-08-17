@@ -4,9 +4,14 @@ extern crate http;
 extern crate hyper;
 extern crate hyper_tls;
 extern crate pretty_env_logger;
+extern crate serde;
+extern crate serde_json;
 
 #[macro_use]
 extern crate failure_derive;
+
+#[macro_use]
+extern crate serde_derive;
 
 use std::collections::HashMap;
 use std::env;
@@ -146,6 +151,55 @@ where
         })
     });
 
+    let res = res.and_then(|bytes| {
+        let json: Response = serde_json::de::from_slice(&bytes).unwrap();
+        Ok(())
+    });
+
     let res = res.and_then(|_| Ok(()));
     Ok(res)
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+struct BigResponse {
+    response: Response,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+struct Response {
+    posts: Vec<Post>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+struct Post {
+    id: String,
+    photos: Vec<Photo>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+struct Photo {
+    sizes: Vec<PhotoSize>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+struct PhotoSize {
+    width: usize,
+    height: usize,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_json_parse() {
+        let photo_size: PhotoSize = serde_json::de::from_str("{\"width\": 1280, \"height\": 722, \"url\": \"http:\\/\\/derekg.org\\/photo\\/1280\\/7431599279\\/1\\/ tumblr_lo36wbWqqq1qanqww\"}").unwrap();
+        assert_eq!(photo_size.width, 1280);
+        assert_eq!(photo_size.height, 722);
+    }
+
+    #[test]
+    fn test_full_parse() {
+        let response: Response = serde_json::de::from_str(include_str!("response.json")).unwrap();
+    }
 }
