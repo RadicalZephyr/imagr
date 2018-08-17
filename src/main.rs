@@ -137,19 +137,21 @@ where
 {
     let uri = photo_posts_uri(blog_identifier, api_key)?;
     println!("{}", uri);
-    let res = client.get(uri)
+    let res = client
+        .get(uri)
         .map_err(handle_connection_error)
         .and_then(|response| {
-        println!("Response: {}", response.status());
-        println!("Headers: {:#?}", response.headers());
+            println!("Response: {}", response.status());
+            println!("Headers: {:#?}", response.headers());
 
-        response.into_body()
-            .map_err(|_| ())
-            .fold(Vec::new(), |mut acc, chunk| {
-            acc.extend_from_slice(&chunk);
-            Ok(acc)
-        })
-    });
+            response
+                .into_body()
+                .map_err(|_| ())
+                .fold(Vec::new(), |mut acc, chunk| {
+                    acc.extend_from_slice(&chunk);
+                    Ok(acc)
+                })
+        });
 
     let res = res.and_then(|bytes| {
         let json: Response = serde_json::de::from_slice(&bytes).unwrap();
