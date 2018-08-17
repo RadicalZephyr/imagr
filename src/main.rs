@@ -18,6 +18,7 @@ use std::env;
 use std::fmt;
 use std::io::{self, Write};
 use std::process;
+use std::cmp;
 
 use failure::Error;
 use futures::{Future, Stream};
@@ -184,10 +185,28 @@ struct Photo {
     sizes: Vec<PhotoSize>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 struct PhotoSize {
     width: usize,
     height: usize,
+}
+
+impl PhotoSize {
+    fn area(&self) -> usize {
+        self.width * self.height
+    }
+}
+
+impl Ord for PhotoSize {
+    fn cmp(&self, other: &PhotoSize) -> cmp::Ordering {
+        self.area().cmp(&other.area())
+    }
+}
+
+impl PartialOrd for PhotoSize {
+    fn partial_cmp(&self, other: &PhotoSize) -> Option<cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 #[cfg(test)]
@@ -204,5 +223,12 @@ mod tests {
     #[test]
     fn test_full_parse() {
         let response: BigResponse = serde_json::de::from_str(include_str!("response.json")).unwrap();
+    }
+
+    #[test]
+    fn test_photo_size_compares_by_area() {
+        let really_tall = PhotoSize { width: 10, height: 10000 };
+        let square = PhotoSize { width: 100, height: 100 };
+        assert!(really_tall > square);
     }
 }
