@@ -13,12 +13,9 @@ extern crate failure_derive;
 #[macro_use]
 extern crate serde_derive;
 
+use std::{cmp, env, fmt, process};
 use std::collections::HashMap;
-use std::env;
-use std::fmt;
 use std::io::{self, Write};
-use std::process;
-use std::cmp;
 
 use failure::Error;
 use futures::{Future, Stream};
@@ -181,8 +178,8 @@ struct Post {
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 struct Photo {
-    #[serde(rename = "alt_sizes")]
-    sizes: Vec<PhotoSize>,
+    #[serde(rename = "original_size")]
+    size: PhotoSize,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]

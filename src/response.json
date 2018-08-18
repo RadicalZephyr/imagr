@@ -20,7 +20,12 @@
             "caption": "<p>my arm is getting tired.<\/p>",
             "photos": [
                {
-                  "caption": "",
+                 "caption": "",
+                 "original_size": {
+                   "width": 1280,
+                   "height": 722,
+                   "url": "http:\/\/derekg.org\/photo\/1280\/7431599279\/1\/tumblr_lo36wbWqqq1qanqww"
+                 },
                   "alt_sizes": [
                      {
                         "width": 1280,
