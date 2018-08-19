@@ -184,6 +184,7 @@ struct Photo {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 struct PhotoSize {
+    url: String,
     width: usize,
     height: usize,
 }
@@ -224,8 +225,8 @@ mod tests {
 
     #[test]
     fn test_photo_size_compares_by_area() {
-        let really_tall = PhotoSize { width: 10, height: 10000 };
-        let square = PhotoSize { width: 100, height: 100 };
+        let really_tall = PhotoSize { width: 10, height: 10000, url: String::from("") };
+        let square = PhotoSize { width: 100, height: 100, url: String::from(""),  };
         assert!(really_tall > square);
     }
 }
