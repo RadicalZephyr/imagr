@@ -1,6 +1,9 @@
+cargo-features = ["edition"]
+
 [package]
 name = "imagr"
 version = "0.1.0"
+edition = "2018"
 authors = ["Reilly Tucker Siemens <reilly@tuckersiemens.com>", "Geoff Shannon <geoffpshannon@gmail.com>"]
 
 [dependencies]
