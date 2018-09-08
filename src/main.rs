@@ -1,11 +1,11 @@
-extern crate failure;
-extern crate futures;
-extern crate http;
-extern crate hyper;
-extern crate hyper_tls;
-extern crate pretty_env_logger;
-extern crate serde;
-extern crate serde_json;
+#![feature(await_macro, async_await, futures_api)]
+
+#[macro_use]
+extern crate tokio;
+
+use hyper;
+use hyper_tls;
+use pretty_env_logger;
 
 #[macro_use]
 extern crate failure_derive;
@@ -13,18 +13,15 @@ extern crate failure_derive;
 #[macro_use]
 extern crate serde_derive;
 
-extern crate imagr;
-
-use std::{cmp, env, fmt, process};
+use std::{env, fmt, process};
 use std::collections::HashMap;
-use std::io::{self, Write};
+use std::io::Write;
 
 use failure::Error;
 use futures::{Future, Stream};
 
 use http::uri::{self, Uri};
 use hyper::client::{connect::Connect, HttpConnector};
-use hyper::rt;
 use hyper::Client;
 use hyper_tls::HttpsConnector;
 
@@ -44,7 +41,7 @@ impl QueryParameters {
 }
 
 impl fmt::Display for QueryParameters {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -58,7 +55,7 @@ impl fmt::Display for QueryParameters {
 }
 
 impl fmt::Display for UriPath {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0.join("/"))
     }
 }
@@ -87,10 +84,17 @@ fn run() -> Result<(), Error> {
     // TODO: Custom missing env var error message.
     let api_key = env::var("IMAGR_TOKEN")?;
 
-    let client = build_client()?;
 
-    let future = tumbl(client, api_key, blog_identifier)?;
-    rt::run(future);
+    tokio::run_async(async {
+        let client = build_client().unwrap();
+
+        let uri = photo_posts_uri(blog_identifier, api_key).unwrap();
+
+        let status = await!(get_status(&client, uri)).unwrap();
+
+        println!("Status: {}", status);
+    });
+
 
     Ok(())
 }
@@ -127,36 +131,8 @@ fn tumblr_uri(
     ).parse()
 }
 
-fn tumbl<C>(
-    client: Client<C>,
-    api_key: String,
-    blog_identifier: String,
-) -> Result<impl Future<Item = (), Error = ()>, uri::InvalidUri>
-where
-    C: 'static + Connect,
+pub async fn get_status<C>(client: &Client<C>, uri: Uri) -> Result<http::status::StatusCode, hyper::Error>
+where C: 'static + Connect
 {
-    let uri = photo_posts_uri(blog_identifier, api_key)?;
-    println!("{}", uri);
-    let res = client
-        .get(uri)
-        .map_err(handle_connection_error)
-        .and_then(|response| {
-            println!("Response: {}", response.status());
-            println!("Headers: {:#?}", response.headers());
-
-            response
-                .into_body()
-                .map_err(|_| ())
-                .fold(Vec::new(), |mut acc, chunk| {
-                    acc.extend_from_slice(&chunk);
-                    Ok(acc)
-                })
-        });
-
-    let res = res.and_then(|_bytes| {
-        Ok(())
-    });
-
-    let res = res.and_then(|_| Ok(()));
-    Ok(res)
+    await!(client.get(uri)).map(|r| r.status())
 }

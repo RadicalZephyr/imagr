@@ -1,8 +1,5 @@
-extern crate futures;
-extern crate hyper;
-
-extern crate serde;
-extern crate serde_json;
+#[macro_use]
+extern crate tokio;
 
 #[macro_use]
 extern crate serde_derive;
@@ -13,7 +10,7 @@ use hyper::Client;
 use hyper::client::{connect::Connect, HttpConnector};
 
 mod photos;
-pub use photos::Photo;
+pub use self::photos::Photo;
 
 struct Blog<C> {
     client: Client<C>,
@@ -21,14 +18,14 @@ struct Blog<C> {
     blog_identifier: String,
 }
 
-fn fetch_page_count<C>(_blog: &Blog<C>) -> impl Future<Item = usize, Error = ()>
-where C: 'static + Connect,
+impl<C> Blog<C> 
+where C: 'static + Connect
 {
-    future::ok(0)
-}
+    fn fetch_page_count(&self) -> impl Future<Item = usize, Error = ()> {
+        future::ok(0)
+    }
 
-fn fetch_page<C>(_blog: &Blog<C>, _page_index: usize) -> impl Stream<Item = usize, Error = ()>
-where C: 'static + Connect,
-{
-    stream::iter_ok(vec![])
+    fn fetch_page(&self, _page_index: usize) -> impl Stream<Item = usize, Error = ()> {
+        stream::iter_ok(vec![])
+    }
 }
