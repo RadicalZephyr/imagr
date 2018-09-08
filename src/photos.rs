@@ -63,7 +63,7 @@ mod tests {
 
     #[test]
     fn test_full_parse() {
-        let response: BigResponse = serde_json::de::from_str(include_str!("response.json")).unwrap();
+        let _response: BigResponse = serde_json::de::from_str(include_str!("response.json")).unwrap();
     }
 
     #[test]

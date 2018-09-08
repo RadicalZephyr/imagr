@@ -153,7 +153,7 @@ where
                 })
         });
 
-    let res = res.and_then(|bytes| {
+    let res = res.and_then(|_bytes| {
         Ok(())
     });
 

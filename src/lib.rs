@@ -21,13 +21,13 @@ struct Blog<C> {
     blog_identifier: String,
 }
 
-fn fetch_page_count<C>(blog: &Blog<C>) -> impl Future<Item = usize, Error = ()>
+fn fetch_page_count<C>(_blog: &Blog<C>) -> impl Future<Item = usize, Error = ()>
 where C: 'static + Connect,
 {
     future::ok(0)
 }
 
-fn fetch_page<C>(blog: &Blog<C>, page_index: usize) -> impl Stream<Item = usize, Error = ()>
+fn fetch_page<C>(_blog: &Blog<C>, _page_index: usize) -> impl Stream<Item = usize, Error = ()>
 where C: 'static + Connect,
 {
     stream::iter_ok(vec![])
