@@ -1,14 +1,19 @@
-use std::collections::HashMap;
-use std::fmt;
+use std::{borrow::Cow, collections::HashMap, fmt};
 
 use http::uri::{self, Uri};
 
-pub struct QueryParameters<'a>(HashMap<&'a str, &'a str>);
+pub struct QueryParameters<'a>(HashMap<&'static str, Cow<'a, str>>);
+
+impl<'a> QueryParameters<'a> {
+    pub fn new(inner: HashMap<&'static str, Cow<'a, str>>) -> QueryParameters<'a> {
+        QueryParameters(inner)
+    }
+}
 
 impl<'a> QueryParameters<'a> {
     fn with_api_key(api_key: &'a str) -> QueryParameters<'a> {
         let mut query_params = HashMap::new();
-        query_params.insert("api_key", api_key);
+        query_params.insert("api_key", Cow::from(api_key));
         QueryParameters(query_params)
     }
 }
@@ -41,7 +46,7 @@ impl fmt::Display for UriPath {
     }
 }
 
-fn tumblr_uri(
+pub fn tumblr_uri(
     blog_identifier: impl AsRef<str>,
     path: &UriPath,
     query_params: &QueryParameters,

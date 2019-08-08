@@ -13,8 +13,9 @@ use hyper::Client;
 mod photos;
 pub use self::photos::Photo;
 
+mod macros;
+
 mod uri;
-use crate::uri::{QueryParameters};
 
 pub struct Blog<C> {
     client: Client<C>,
@@ -31,6 +32,9 @@ where
     }
 
     async fn fetch_page_count(&self) -> usize {
+        let path = uri_path![posts/photos];
+        let params = uri_params!{ api_key => &self.api_key, limit => "1" };
+        let uri = uri::tumblr_uri(&self.blog_identifier, &path, &params);
         0
     }
 }
