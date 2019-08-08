@@ -69,6 +69,12 @@ fn main() {
     }
 }
 
+async fn download_blog_photos(blog_identifier: String, api_key: String) {
+    let client = build_client().unwrap();
+    let uri = photo_posts_uri(blog_identifier, api_key).unwrap();
+
+}
+
 fn run() -> Result<(), Error> {
     pretty_env_logger::init();
 
@@ -83,13 +89,7 @@ fn run() -> Result<(), Error> {
     // TODO: Custom missing env var error message.
     let api_key = env::var("IMAGR_TOKEN")?;
 
-    let futures_03_future = async {
-        let client = build_client().unwrap();
-
-        let uri = photo_posts_uri(blog_identifier, api_key).unwrap();
-
-    };
-
+    let futures_03_future = download_blog_photos(blog_identifier, api_key);
     let futures_01_future = futures_03_future.unit_error().boxed().compat();
     hyper::rt::run(futures_01_future);
 
