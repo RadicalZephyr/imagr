@@ -15,7 +15,7 @@ extern crate serde_derive;
 use std::{env, process};
 
 use failure::Error;
-use futures::future::{FutureExt, TryFutureExt};
+use futures::future::{join_all, FutureExt, TryFutureExt};
 
 use hyper::client::HttpConnector;
 use hyper::Client;
@@ -41,7 +41,17 @@ fn main() {
 async fn download_blog_photos(api_key: String, blog_identifier: String) {
     let client = build_client().unwrap();
     let blog = Blog::new(client, api_key, blog_identifier);
-    let _post_count = blog.fetch_post_count().await.unwrap();
+
+    let post_count = blog.fetch_post_count().await.unwrap();
+    let mut page_start_index = 0;
+
+    while page_start_index < post_count {
+        let photos = blog.fetch_posts_page(page_start_index).await.unwrap();
+        let received = photos.len();
+        let files = photos.into_iter().map(|post| blog.download_file(post));
+        join_all(files).await;
+        page_start_index += received;
+    }
 }
 
 fn run() -> Result<(), Error> {

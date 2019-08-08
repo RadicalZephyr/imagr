@@ -10,21 +10,21 @@ extern crate serde_derive;
 
 use futures::compat::Future01CompatExt;
 
-use hyper::rt::{Future, Stream};
-use hyper::client::{connect::Connect, HttpConnector};
+use hyper::rt::Stream;
+use hyper::client::connect::Connect;
 use hyper::Client;
 
-use serde_json::{from_str, Value};
-
 mod photos;
-pub use crate::photos::Photo;
+pub use crate::photos::{Posts, Post, Photo};
 
 mod macros;
 
 mod uri;
 
 mod response;
-use crate::response::{Response, Meta, TotalPosts};
+use crate::response::{Response, TotalPosts};
+
+const MAX_PAGE_SIZE: &'static str = "20";
 
 #[derive(Debug, Fail)]
 pub enum Error {
@@ -87,5 +87,35 @@ where
         } else {
             Err(Error::Api(v.meta.msg.clone()))
         }
+    }
+
+    pub async fn fetch_posts_page(&self, page_start_index: usize) -> Result<Vec<Post>, Error> {
+        let path = uri_path![posts/photo];
+        let params = uri_params!{
+            api_key => &self.api_key,
+            limit => MAX_PAGE_SIZE,
+            offset => format!("{}", page_start_index)
+        };
+        let uri = uri::tumblr_uri(&self.blog_identifier, &path, &params)?;
+
+        let response = self.client.get(uri).compat().await?;
+        let body = response.into_body().map(hyper::Chunk::into_bytes).concat2().compat().await?;
+        let v: serde_json::Value = serde_json::from_slice(&body)?;
+        if let serde_json::Value::Object(map) = &v["response"]["posts"][0]["blog"] {
+            dbg!(map.keys().collect::<Vec<&String>>());
+        }
+
+        let v: Response<Posts> = serde_json::from_slice(&body)?;
+
+        if v.meta.is_success() {
+            Ok(v.response.posts.into_iter().map(|blog| blog.post).collect())
+        } else {
+            Err(Error::Api(v.meta.msg.clone()))
+        }
+    }
+
+    pub async fn download_file(&self, post: Post) {
+        dbg!(post);
+
     }
 }

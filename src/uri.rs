@@ -10,14 +10,6 @@ impl<'a> QueryParameters<'a> {
     }
 }
 
-impl<'a> QueryParameters<'a> {
-    fn with_api_key(api_key: &'a str) -> QueryParameters<'a> {
-        let mut query_params = HashMap::new();
-        query_params.insert("api_key", Cow::from(api_key));
-        QueryParameters(query_params)
-    }
-}
-
 impl<'a> fmt::Display for QueryParameters<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

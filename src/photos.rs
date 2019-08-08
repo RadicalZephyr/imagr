@@ -1,24 +1,24 @@
 use std::cmp;
 
-
 #[derive(Clone, Debug, Deserialize, PartialEq)]
-struct BigResponse {
-    response: Response,
+pub struct Posts {
+    pub posts: Vec<Blog>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
-struct Response {
-    posts: Vec<Post>,
+pub struct Blog {
+    #[serde(rename = "blog")]
+    pub post: Post,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
-struct Post {
+pub struct Post {
     id: usize,
     photos: Vec<PhotoContainer>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
-struct PhotoContainer {
+pub struct PhotoContainer {
     #[serde(rename = "original_size")]
     size: Photo,
 }
@@ -52,6 +52,8 @@ impl PartialOrd for Photo {
 mod tests {
     use super::*;
 
+    use crate::response::Response;
+
     use serde_json;
 
     #[test]
@@ -63,13 +65,22 @@ mod tests {
 
     #[test]
     fn test_full_parse() {
-        let _response: BigResponse = serde_json::de::from_str(include_str!("response.json")).unwrap();
+        let _response: Response<Posts> =
+            serde_json::de::from_str(include_str!("response.json")).unwrap();
     }
 
     #[test]
     fn test_photo_size_compares_by_area() {
-        let really_tall = Photo { width: 10, height: 10000, url: String::from("") };
-        let square = Photo { width: 100, height: 100, url: String::from(""),  };
+        let really_tall = Photo {
+            width: 10,
+            height: 10000,
+            url: String::from(""),
+        };
+        let square = Photo {
+            width: 100,
+            height: 100,
+            url: String::from(""),
+        };
         assert!(really_tall > square);
     }
 }
