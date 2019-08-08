@@ -2,13 +2,7 @@ use std::cmp;
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Posts {
-    pub posts: Vec<Blog>,
-}
-
-#[derive(Clone, Debug, Deserialize, PartialEq)]
-pub struct Blog {
-    #[serde(rename = "blog")]
-    pub post: Post,
+    pub posts: Vec<Post>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -21,6 +15,7 @@ pub struct Post {
 pub struct PhotoContainer {
     #[serde(rename = "original_size")]
     size: Photo,
+    alt_sizes: Vec<Photo>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]

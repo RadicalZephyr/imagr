@@ -17,3 +17,21 @@ macro_rules! uri_params {
         }
     }
 }
+
+#[macro_export]
+macro_rules! dbg_json {
+    { $e:expr } => {
+        {
+            let val = &($e);
+            if let serde_json::Value::Object(map) = val {
+                eprintln!("[{}:{}] {}.keys() = {:?}",
+                          file!(),
+                          line!(),
+                          stringify!($e),
+                          map.keys().collect::<Vec<&std::string::String>>());
+            } else {
+                dbg!(val);
+            }
+        }
+    }
+}
