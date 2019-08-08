@@ -28,18 +28,18 @@ use hyper_tls::HttpsConnector;
 #[fail(display = "invalid argument")]
 struct InvalidArgument;
 
-struct QueryParameters(HashMap<String, String>);
+struct QueryParameters<'a>(HashMap<&'a str, &'a str>);
 struct UriPath(Vec<&'static str>);
 
-impl QueryParameters {
-    fn new(api_key: impl Into<String>) -> QueryParameters {
+impl<'a> QueryParameters<'a> {
+    fn with_api_key(api_key: &'a str) -> QueryParameters<'a> {
         let mut query_params = HashMap::new();
-        query_params.insert("api_key".into(), api_key.into());
+        query_params.insert("api_key", api_key);
         QueryParameters(query_params)
     }
 }
 
-impl fmt::Display for QueryParameters {
+impl<'a> fmt::Display for QueryParameters<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -108,10 +108,10 @@ fn build_client() -> Result<Client<HttpsConnector<HttpConnector>>, hyper_tls::Er
 
 fn photo_posts_uri(
     blog_identifier: impl AsRef<str>,
-    api_key: String,
+    api_key: impl AsRef<str>,
 ) -> Result<Uri, uri::InvalidUri> {
     let path = UriPath(vec!["posts", "photo"]);
-    let query_params = QueryParameters::new(api_key);
+    let query_params = QueryParameters::with_api_key(api_key.as_ref());
     tumblr_uri(blog_identifier, &path, &query_params)
 }
 
