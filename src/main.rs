@@ -39,9 +39,10 @@ fn main() {
     }
 }
 
-async fn download_blog_photos(blog_identifier: String, api_key: String) {
+async fn download_blog_photos(api_key: String, blog_identifier: String) {
     let client = build_client().unwrap();
-    let mut blog = Blog::new(client, blog_identifier, api_key);
+    let mut blog = Blog::new(client, api_key, blog_identifier);
+    blog.fetch_page_count().await.unwrap();
 }
 
 fn run() -> Result<(), Error> {
@@ -58,7 +59,7 @@ fn run() -> Result<(), Error> {
     // TODO: Custom missing env var error message.
     let api_key = env::var("IMAGR_TOKEN")?;
 
-    let futures_03_future = download_blog_photos(blog_identifier, api_key);
+    let futures_03_future = download_blog_photos(api_key, blog_identifier);
     let futures_01_future = futures_03_future.unit_error().boxed().compat();
     hyper::rt::run(futures_01_future);
 
