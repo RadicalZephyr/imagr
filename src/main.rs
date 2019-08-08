@@ -1,6 +1,5 @@
-#![feature(await_macro, async_await, futures_api)]
+#![feature(async_await)]
 
-#[macro_use]
 extern crate tokio;
 
 use hyper;
@@ -18,7 +17,7 @@ use std::collections::HashMap;
 use std::io::Write;
 
 use failure::Error;
-use futures::{Future, Stream};
+use futures::{compat::Future01CompatExt, future::{FutureExt, TryFutureExt},};
 
 use http::uri::{self, Uri};
 use hyper::client::{connect::Connect, HttpConnector};
@@ -84,17 +83,15 @@ fn run() -> Result<(), Error> {
     // TODO: Custom missing env var error message.
     let api_key = env::var("IMAGR_TOKEN")?;
 
-
-    tokio::run_async(async {
+    let futures_03_future = async {
         let client = build_client().unwrap();
 
         let uri = photo_posts_uri(blog_identifier, api_key).unwrap();
 
-        let status = await!(get_status(&client, uri)).unwrap();
+    };
 
-        println!("Status: {}", status);
-    });
-
+    let futures_01_future = futures_03_future.unit_error().boxed().compat();
+    hyper::rt::run(futures_01_future);
 
     Ok(())
 }
@@ -129,10 +126,4 @@ fn tumblr_uri(
         path = path,
         query_params = query_params,
     ).parse()
-}
-
-pub async fn get_status<C>(client: &Client<C>, uri: Uri) -> Result<http::status::StatusCode, hyper::Error>
-where C: 'static + Connect
-{
-    await!(client.get(uri)).map(|r| r.status())
 }
