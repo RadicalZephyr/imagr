@@ -8,11 +8,16 @@ extern crate failure_derive;
 #[macro_use]
 extern crate serde_derive;
 
+use std::fmt;
+use std::io::Cursor;
+
 use futures::compat::Future01CompatExt;
 
 use hyper::rt::Stream;
 use hyper::client::connect::Connect;
 use hyper::Client;
+
+use serde::de::DeserializeOwned;
 
 mod photos;
 pub use crate::photos::{Posts, Post, Photo};
@@ -20,6 +25,7 @@ pub use crate::photos::{Posts, Post, Photo};
 mod macros;
 
 mod uri;
+use crate::uri::{UriPath, QueryParameters};
 
 mod response;
 use crate::response::{Response, TotalPosts};
@@ -73,20 +79,30 @@ where
         Blog { client, api_key, blog_identifier }
     }
 
-    pub async fn fetch_post_count(&self) -> Result<usize, Error> {
-        let path = uri_path![posts/photo];
-        let params = uri_params!{ api_key => &self.api_key, limit => "1" };
+    async fn get<'a, 'de, T>(&self, path: UriPath, params: QueryParameters<'a>) -> Result<Response<T>, Error>
+    where
+        T: 'static + Clone + fmt::Debug + DeserializeOwned,
+    {
         let uri = uri::tumblr_uri(&self.blog_identifier, &path, &params)?;
 
         let response = self.client.get(uri).compat().await?;
         let body = response.into_body().map(hyper::Chunk::into_bytes).concat2().compat().await?;
-        let v: Response<TotalPosts> = serde_json::from_slice(&body)?;
+        let cursor = Cursor::new(body);
+        let v: Response<T> = serde_json::from_reader(cursor)?;
 
         if v.meta.is_success() {
-            Ok(v.response.amount)
+            Ok(v)
         } else {
             Err(Error::Api(v.meta.msg.clone()))
         }
+    }
+
+    pub async fn fetch_post_count(&self) -> Result<usize, Error> {
+        let path = uri_path![posts/photo];
+        let params = uri_params!{ api_key => &self.api_key, limit => "1" };
+
+        let v: Response<TotalPosts> = self.get::<TotalPosts>(path, params).await?;
+        Ok(v.response.amount)
     }
 
     pub async fn fetch_posts_page(&self, page_start_index: usize) -> Result<Vec<Post>, Error> {
@@ -96,18 +112,9 @@ where
             limit => MAX_PAGE_SIZE,
             offset => format!("{}", page_start_index)
         };
-        let uri = uri::tumblr_uri(&self.blog_identifier, &path, &params)?;
 
-        let response = self.client.get(uri).compat().await?;
-        let body = response.into_body().map(hyper::Chunk::into_bytes).concat2().compat().await?;
-
-        let v: Response<Posts> = serde_json::from_slice(&body)?;
-
-        if v.meta.is_success() {
-            Ok(v.response.posts)
-        } else {
-            Err(Error::Api(v.meta.msg.clone()))
-        }
+        let v: Response<Posts> = self.get::<Posts>(path, params).await?;
+        Ok(v.response.posts)
     }
 
     pub async fn download_file(&self, post: Post) {
