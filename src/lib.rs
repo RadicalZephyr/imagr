@@ -79,7 +79,7 @@ where
         Blog { client, api_key, blog_identifier }
     }
 
-    async fn get<'a, 'de, T>(&self, path: UriPath, params: QueryParameters<'a>) -> Result<Response<T>, Error>
+    async fn tumblr_get<'a, 'de, T>(&self, path: UriPath, params: QueryParameters<'a>) -> Result<Response<T>, Error>
     where
         T: 'static + Clone + fmt::Debug + DeserializeOwned,
     {
@@ -101,7 +101,7 @@ where
         let path = uri_path![posts/photo];
         let params = uri_params!{ api_key => &self.api_key, limit => "1" };
 
-        let v: Response<TotalPosts> = self.get::<TotalPosts>(path, params).await?;
+        let v: Response<TotalPosts> = self.tumblr_get::<TotalPosts>(path, params).await?;
         Ok(v.response.amount)
     }
 
@@ -113,7 +113,7 @@ where
             offset => format!("{}", page_start_index)
         };
 
-        let v: Response<Posts> = self.get::<Posts>(path, params).await?;
+        let v: Response<Posts> = self.tumblr_get::<Posts>(path, params).await?;
         Ok(v.response.posts)
     }
 
