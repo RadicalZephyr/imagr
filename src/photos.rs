@@ -8,7 +8,7 @@ pub struct Posts {
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Post {
     id: usize,
-    photos: Vec<PhotoContainer>,
+    photos: Option<Vec<PhotoContainer>>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]

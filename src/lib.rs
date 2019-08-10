@@ -100,17 +100,6 @@ where
 
         let response = self.client.get(uri).compat().await?;
         let body = response.into_body().map(hyper::Chunk::into_bytes).concat2().compat().await?;
-        let v: serde_json::Value = serde_json::from_slice(&body)?;
-
-        if let serde_json::Value::Array(posts) = &v["response"]["posts"] {
-            for post in posts {
-                if let serde_json::Value::Array(photos) = &post["photos"] {
-                    for photo in photos {
-                        dbg_json!(photo);
-                    }
-                }
-            }
-        }
 
         let v: Response<Posts> = serde_json::from_slice(&body)?;
 
@@ -123,5 +112,6 @@ where
 
     pub async fn download_file(&self, post: Post) {
         dbg!(post);
+        panic!();
     }
 }
