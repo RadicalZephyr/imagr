@@ -1,12 +1,15 @@
-use std::{fmt, io::Cursor};
+use std::{fmt, io};
+
+use async_std::fs::File;
+use async_std::prelude::*;
 
 use failure_derive::Fail;
 
 use futures::compat::Future01CompatExt;
 
-use hyper::{client::connect::Connect, rt::Stream, Client};
-
 use serde::de::DeserializeOwned;
+
+use surf::{middleware::HttpClient, Client, Request};
 
 mod photos;
 pub use crate::photos::{Photo, Post, Posts};
@@ -21,31 +24,21 @@ use crate::response::{Response, TotalPosts};
 
 const MAX_PAGE_SIZE: &'static str = "20";
 
+type SurfError = Box<dyn std::error::Error + Send + Sync>;
+
 #[derive(Debug, Fail)]
 pub enum Error {
-    #[fail(display = "uri error: {}", _0)]
-    Uri(http::uri::InvalidUri),
-
-    #[fail(display = "hyper error: {}", _0)]
-    Http(hyper::error::Error),
+    #[fail(display = "api error: {}", _0)]
+    Api(String),
 
     #[fail(display = "json error: {}", _0)]
     Json(serde_json::error::Error),
 
-    #[fail(display = "api error: {}", _0)]
-    Api(String),
-}
+    #[fail(display = "io error: {}", _0)]
+    Io(io::Error),
 
-impl From<http::uri::InvalidUri> for Error {
-    fn from(error: http::uri::InvalidUri) -> Error {
-        Error::Uri(error)
-    }
-}
-
-impl From<hyper::error::Error> for Error {
-    fn from(error: hyper::error::Error) -> Error {
-        Error::Http(error)
-    }
+    #[fail(display = "surf error: {}", _0)]
+    Surf(SurfError),
 }
 
 impl From<serde_json::error::Error> for Error {
@@ -54,17 +47,34 @@ impl From<serde_json::error::Error> for Error {
     }
 }
 
-pub struct Blog<C> {
+impl From<io::Error> for Error {
+    fn from(error: io::Error) -> Error {
+        Error::Io(error)
+    }
+}
+
+impl From<SurfError> for Error {
+    fn from(error: SurfError) -> Error {
+        Error::Surf(error)
+    }
+}
+
+pub struct Blog<C, E>
+where
+    C: surf::middleware::HttpClient<Error = E>,
+    E: std::error::Error + Send + Sync + 'static,
+{
     client: Client<C>,
     api_key: String,
     blog_identifier: String,
 }
 
-impl<C> Blog<C>
+impl<C, E> Blog<C, E>
 where
-    C: 'static + Connect,
+    C: surf::middleware::HttpClient<Error = E>,
+    E: std::error::Error + Send + Sync + 'static,
 {
-    pub fn new(client: Client<C>, api_key: String, blog_identifier: String) -> Blog<C> {
+    pub fn new(client: Client<C>, api_key: String, blog_identifier: String) -> Blog<C, E> {
         Blog {
             client,
             api_key,
@@ -80,17 +90,8 @@ where
     where
         T: 'static + Clone + fmt::Debug + DeserializeOwned,
     {
-        let uri = uri::tumblr_uri(&self.blog_identifier, &path, &params)?;
-
-        let response = self.client.get(uri).compat().await?;
-        let body = response
-            .into_body()
-            .map(hyper::Chunk::into_bytes)
-            .concat2()
-            .compat()
-            .await?;
-        let cursor = Cursor::new(body);
-        let v: Response<T> = serde_json::from_reader(cursor)?;
+        let uri = uri::tumblr_uri(&self.blog_identifier, &path, &params);
+        let v: Response<T> = self.client.get(uri).recv_json().await?;
 
         if v.meta.is_success() {
             Ok(v)
@@ -119,8 +120,10 @@ where
         Ok(v.response.posts)
     }
 
-    pub async fn download_file(&self, post: Post) {
+    pub async fn download_file(&self, post: Post) -> Result<(), Error> {
         dbg!(post);
-        panic!();
+        let mut file = File::create("lol.jpg").await?;
+        file.write_all(b"something").await?;
+        Ok(())
     }
 }

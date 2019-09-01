@@ -4,6 +4,8 @@ use serde_derive::Deserialize;
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Posts {
+    pub id: u64,
+    pub slug: String,
     pub posts: Vec<Post>,
 }
 
@@ -16,7 +18,7 @@ pub struct Post {
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct PhotoContainer {
     #[serde(rename = "original_size")]
-    size: Photo,
+    photo: Photo,
     alt_sizes: Vec<Photo>,
 }
 

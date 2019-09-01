@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, fmt};
 
-use http::uri::{self, Uri};
+use surf::url::{ParseError, Url};
 
 pub struct QueryParameters<'a>(HashMap<&'static str, Cow<'a, str>>);
 
@@ -42,12 +42,11 @@ pub fn tumblr_uri(
     blog_identifier: impl AsRef<str>,
     path: &UriPath,
     query_params: &QueryParameters,
-) -> Result<Uri, uri::InvalidUri> {
+) -> String {
     format!(
         "https://api.tumblr.com/v2/blog/{blog_identifier}/{path}?{query_params}",
         blog_identifier = blog_identifier.as_ref(),
         path = path,
         query_params = query_params,
     )
-    .parse()
 }

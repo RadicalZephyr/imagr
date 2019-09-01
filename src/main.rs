@@ -16,13 +16,8 @@ use imagr::Blog;
 #[fail(display = "invalid argument")]
 struct InvalidArgument;
 
-fn build_client() -> Result<Client<HttpsConnector<HttpConnector>>, hyper_tls::Error> {
-    let https = HttpsConnector::new(4)?;
-    Ok(Client::builder().build::<_, hyper::Body>(https))
-}
-
-async fn download_blog_photos(api_key: String, blog_identifier: String) {
-    let client = build_client().unwrap();
+async fn download_blog_photos(api_key: String, blog_identifier: String) -> Result<(), Error> {
+    let client = surf::Client::new();
     let blog = Blog::new(client, api_key, blog_identifier);
 
     let post_count = blog.fetch_post_count().await.unwrap();
@@ -35,9 +30,10 @@ async fn download_blog_photos(api_key: String, blog_identifier: String) {
         join_all(files).await;
         page_start_index += received;
     }
+    Ok(())
 }
 
-fn run() -> Result<(), Error> {
+async fn run() -> Result<(), Error> {
     pretty_env_logger::init();
 
     // Some simple CLI args requirements...
@@ -51,15 +47,14 @@ fn run() -> Result<(), Error> {
     // TODO: Custom missing env var error message.
     let api_key = env::var("IMAGR_TOKEN")?;
 
-    let futures_03_future = download_blog_photos(api_key, blog_identifier);
-    let futures_01_future = futures_03_future.unit_error().boxed().compat();
-    hyper::rt::run(futures_01_future);
+    // TODO: Make it return a Result.
+    download_blog_photos(api_key, blog_identifier).await?;
 
     Ok(())
 }
 
 fn main() {
-    match run() {
+    match runtime::raw::enter(runtime::native::Native, async { run().await }) {
         Ok(()) => {}
         Err(err) => {
             println!("Usage: imagr <blog_identifier>\nError: {}", err);
