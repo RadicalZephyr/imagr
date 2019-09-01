@@ -26,7 +26,7 @@ async fn download_blog_photos(api_key: String, blog_identifier: String) -> Resul
     while page_start_index < post_count {
         let photos = blog.fetch_posts_page(page_start_index).await.unwrap();
         let received = photos.len();
-        let files = photos.into_iter().map(|post| blog.download_file(post));
+        let files = photos.into_iter().map(|post| blog.download_post(post));
         join_all(files).await;
         page_start_index += received;
     }

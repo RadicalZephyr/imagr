@@ -5,6 +5,9 @@ use async_std::prelude::*;
 
 use failure_derive::Fail;
 
+use futures::io::{AsyncBufReadExt, BufReader};
+use futures::join;
+
 use serde::de::DeserializeOwned;
 
 use surf::Client;
@@ -121,10 +124,24 @@ where
         Ok(v.response.posts.into_iter().map(Post::from).collect())
     }
 
-    pub async fn download_file(&self, post: Post) -> Result<(), Error> {
-        dbg!(post);
-        let mut file = File::create("lol.jpg").await?;
-        file.write_all(b"something").await?;
+    pub async fn download_post(&self, post: Post) -> Result<(), Error> {
+        for (index, photo) in post.photos.iter().enumerate() {
+            let filename = format!(
+                "/tmp/pics/{slug}-{id}-{index}",
+                slug = post.slug,
+                id = post.id,
+                index = index
+            );
+
+            let future_file = File::create(filename);
+            let future_response = self.client.get(&photo.url);
+
+            let (file, response) = join!(future_file, future_response);
+            let (mut file, mut response) = (file?, response?);
+            let reader = BufReader::with_capacity(32_768, response);
+            reader.copy_buf_into(&mut file).await?;
+        }
+
         Ok(())
     }
 }
