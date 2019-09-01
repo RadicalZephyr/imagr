@@ -1,25 +1,14 @@
-#![feature(async_await)]
-
-extern crate tokio;
-
-use hyper;
-use hyper_tls;
-use pretty_env_logger;
-
-#[macro_use]
-extern crate failure_derive;
-
-#[macro_use]
-extern crate serde_derive;
-
 use std::{env, process};
 
 use failure::Error;
+use failure_derive::Fail;
+
 use futures::future::{join_all, FutureExt, TryFutureExt};
 
-use hyper::client::HttpConnector;
-use hyper::Client;
-use hyper_tls::HttpsConnector;
+use hyper::{self, client::HttpConnector, Client};
+use hyper_tls::{self, HttpsConnector};
+
+use pretty_env_logger;
 
 use imagr::Blog;
 
@@ -72,11 +61,6 @@ fn run() -> Result<(), Error> {
     hyper::rt::run(futures_01_future);
 
     Ok(())
-}
-
-fn handle_connection_error(err: hyper::Error) {
-    println!("Error: {}", err);
-    process::exit(1)
 }
 
 fn build_client() -> Result<Client<HttpsConnector<HttpConnector>>, hyper_tls::Error> {

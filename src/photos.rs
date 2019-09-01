@@ -1,5 +1,7 @@
 use std::cmp;
 
+use serde_derive::Deserialize;
+
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Posts {
     pub posts: Vec<Post>,

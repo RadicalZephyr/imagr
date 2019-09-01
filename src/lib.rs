@@ -1,21 +1,10 @@
-#![feature(async_await)]
+use std::{fmt, io::Cursor};
 
-extern crate tokio;
-
-#[macro_use]
-extern crate failure_derive;
-
-#[macro_use]
-extern crate serde_derive;
-
-use std::fmt;
-use std::io::Cursor;
+use failure_derive::Fail;
 
 use futures::compat::Future01CompatExt;
 
-use hyper::client::connect::Connect;
-use hyper::rt::Stream;
-use hyper::Client;
+use hyper::{client::connect::Connect, rt::Stream, Client};
 
 use serde::de::DeserializeOwned;
 

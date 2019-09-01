@@ -1,6 +1,7 @@
 use std::fmt;
 
 use serde::de::DeserializeOwned;
+use serde_derive::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(bound = "T: Clone + fmt::Debug + DeserializeOwned")]
