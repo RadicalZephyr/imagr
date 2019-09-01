@@ -16,14 +16,9 @@ use imagr::Blog;
 #[fail(display = "invalid argument")]
 struct InvalidArgument;
 
-fn main() {
-    match run() {
-        Ok(()) => {}
-        Err(err) => {
-            println!("Usage: imagr <blog_identifier>\nError: {}", err);
-            process::exit(1);
-        }
-    }
+fn build_client() -> Result<Client<HttpsConnector<HttpConnector>>, hyper_tls::Error> {
+    let https = HttpsConnector::new(4)?;
+    Ok(Client::builder().build::<_, hyper::Body>(https))
 }
 
 async fn download_blog_photos(api_key: String, blog_identifier: String) {
@@ -63,7 +58,12 @@ fn run() -> Result<(), Error> {
     Ok(())
 }
 
-fn build_client() -> Result<Client<HttpsConnector<HttpConnector>>, hyper_tls::Error> {
-    let https = HttpsConnector::new(4)?;
-    Ok(Client::builder().build::<_, hyper::Body>(https))
+fn main() {
+    match run() {
+        Ok(()) => {}
+        Err(err) => {
+            println!("Usage: imagr <blog_identifier>\nError: {}", err);
+            process::exit(1);
+        }
+    }
 }
