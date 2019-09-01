@@ -126,7 +126,7 @@ where
     pub async fn download_post(&self, post: Post) -> Result<(), Error> {
         for (index, photo) in post.photos.iter().enumerate() {
             let filename = format!(
-                "/tmp/pics/{slug}-{id}-{index}",
+                "/tmp/pics/{slug}-{id}-{index}.jpg",
                 slug = post.slug,
                 id = post.id,
                 index = index

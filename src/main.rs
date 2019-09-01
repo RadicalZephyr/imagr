@@ -40,7 +40,7 @@ async fn run() -> Result<(), Error> {
             return Err(InvalidArgument.into());
         }
     };
-
+    async_std::fs::create_dir("/tmp/pics").await?;
     // TODO: Custom missing env var error message.
     let api_key = env::var("IMAGR_TOKEN")?;
 
