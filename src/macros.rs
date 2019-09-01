@@ -12,7 +12,7 @@ macro_rules! uri_params {
             use std::collections::HashMap;
             use std::borrow::Cow;
             let mut map: HashMap<&'static str, Cow<'_, str>> = HashMap::new();
-            $( map.insert(stringify!($key), Cow::from($val)); )*;
+            $( map.insert(stringify!($key), Cow::from($val)); )*
             $crate::uri::QueryParameters::new(map)
         }
     }
