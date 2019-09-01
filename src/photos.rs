@@ -4,27 +4,26 @@ use serde_derive::Deserialize;
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Posts {
-    pub id: u64,
-    pub slug: String,
     pub posts: Vec<Post>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct Post {
-    id: usize,
-    photos: Option<Vec<PhotoContainer>>,
+    pub id: u64,
+    pub slug: String,
+    pub photos: Option<Vec<PhotoContainer>>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct PhotoContainer {
     #[serde(rename = "original_size")]
-    photo: Photo,
+    pub photo: Photo,
     alt_sizes: Vec<Photo>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct Photo {
-    url: String,
+    pub url: String,
     width: usize,
     height: usize,
 }
@@ -45,6 +44,12 @@ impl PartialOrd for Photo {
     fn partial_cmp(&self, other: &Photo) -> Option<cmp::Ordering> {
         Some(self.cmp(other))
     }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+pub struct TotalPosts {
+    #[serde(rename = "total_posts")]
+    pub amount: usize,
 }
 
 #[cfg(test)]

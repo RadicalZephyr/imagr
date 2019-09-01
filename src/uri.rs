@@ -1,7 +1,5 @@
 use std::{borrow::Cow, collections::HashMap, fmt};
 
-use surf::url::{ParseError, Url};
-
 pub struct QueryParameters<'a>(HashMap<&'static str, Cow<'a, str>>);
 
 impl<'a> QueryParameters<'a> {

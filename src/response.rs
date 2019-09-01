@@ -23,9 +23,3 @@ impl Meta {
         self.status == 200
     }
 }
-
-#[derive(Clone, Debug, Deserialize, PartialEq)]
-pub struct TotalPosts {
-    #[serde(rename = "total_posts")]
-    pub amount: usize,
-}

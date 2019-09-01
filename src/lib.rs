@@ -5,14 +5,15 @@ use async_std::prelude::*;
 
 use failure_derive::Fail;
 
-use futures::compat::Future01CompatExt;
-
 use serde::de::DeserializeOwned;
 
-use surf::{middleware::HttpClient, Client, Request};
+use surf::Client;
 
 mod photos;
-pub use crate::photos::{Photo, Post, Posts};
+pub use crate::photos::{Posts, TotalPosts};
+
+mod better_photos;
+pub use crate::better_photos::{Photo, Post};
 
 mod macros;
 
@@ -20,7 +21,7 @@ mod uri;
 use crate::uri::{QueryParameters, UriPath};
 
 mod response;
-use crate::response::{Response, TotalPosts};
+use crate::response::Response;
 
 const MAX_PAGE_SIZE: &'static str = "20";
 
@@ -117,7 +118,7 @@ where
         };
 
         let v: Response<Posts> = self.tumblr_get::<Posts>(path, params).await?;
-        Ok(v.response.posts)
+        Ok(v.response.posts.into_iter().map(Post::from).collect())
     }
 
     pub async fn download_file(&self, post: Post) -> Result<(), Error> {
