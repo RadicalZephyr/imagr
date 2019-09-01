@@ -23,7 +23,6 @@ use hyper_tls::HttpsConnector;
 
 use imagr::Blog;
 
-
 #[derive(Debug, Fail)]
 #[fail(display = "invalid argument")]
 struct InvalidArgument;

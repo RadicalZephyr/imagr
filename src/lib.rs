@@ -13,19 +13,19 @@ use std::io::Cursor;
 
 use futures::compat::Future01CompatExt;
 
-use hyper::rt::Stream;
 use hyper::client::connect::Connect;
+use hyper::rt::Stream;
 use hyper::Client;
 
 use serde::de::DeserializeOwned;
 
 mod photos;
-pub use crate::photos::{Posts, Post, Photo};
+pub use crate::photos::{Photo, Post, Posts};
 
 mod macros;
 
 mod uri;
-use crate::uri::{UriPath, QueryParameters};
+use crate::uri::{QueryParameters, UriPath};
 
 mod response;
 use crate::response::{Response, TotalPosts};
@@ -76,17 +76,30 @@ where
     C: 'static + Connect,
 {
     pub fn new(client: Client<C>, api_key: String, blog_identifier: String) -> Blog<C> {
-        Blog { client, api_key, blog_identifier }
+        Blog {
+            client,
+            api_key,
+            blog_identifier,
+        }
     }
 
-    async fn tumblr_get<'a, 'de, T>(&self, path: UriPath, params: QueryParameters<'a>) -> Result<Response<T>, Error>
+    async fn tumblr_get<'a, 'de, T>(
+        &self,
+        path: UriPath,
+        params: QueryParameters<'a>,
+    ) -> Result<Response<T>, Error>
     where
         T: 'static + Clone + fmt::Debug + DeserializeOwned,
     {
         let uri = uri::tumblr_uri(&self.blog_identifier, &path, &params)?;
 
         let response = self.client.get(uri).compat().await?;
-        let body = response.into_body().map(hyper::Chunk::into_bytes).concat2().compat().await?;
+        let body = response
+            .into_body()
+            .map(hyper::Chunk::into_bytes)
+            .concat2()
+            .compat()
+            .await?;
         let cursor = Cursor::new(body);
         let v: Response<T> = serde_json::from_reader(cursor)?;
 
@@ -98,16 +111,16 @@ where
     }
 
     pub async fn fetch_post_count(&self) -> Result<usize, Error> {
-        let path = uri_path![posts/photo];
-        let params = uri_params!{ api_key => &self.api_key, limit => "1" };
+        let path = uri_path![posts / photo];
+        let params = uri_params! { api_key => &self.api_key, limit => "1" };
 
         let v: Response<TotalPosts> = self.tumblr_get::<TotalPosts>(path, params).await?;
         Ok(v.response.amount)
     }
 
     pub async fn fetch_posts_page(&self, page_start_index: usize) -> Result<Vec<Post>, Error> {
-        let path = uri_path![posts/photo];
-        let params = uri_params!{
+        let path = uri_path![posts / photo];
+        let params = uri_params! {
             api_key => &self.api_key,
             limit => MAX_PAGE_SIZE,
             offset => format!("{}", page_start_index)
