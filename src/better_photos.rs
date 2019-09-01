@@ -24,7 +24,7 @@ impl From<photos::Post> for Post {
     fn from(post: photos::Post) -> Post {
         let photos::Post { id, slug, photos } = post;
         let photos = photos
-            .unwrap_or_else(|| Vec::new())
+            .unwrap_or_else(Vec::new)
             .into_iter()
             .map(Photo::from)
             .collect();

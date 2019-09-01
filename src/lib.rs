@@ -1,7 +1,6 @@
 use std::{fmt, io};
 
 use async_std::fs::File;
-use async_std::prelude::*;
 
 use failure_derive::Fail;
 
@@ -26,7 +25,7 @@ use crate::uri::{QueryParameters, UriPath};
 mod response;
 use crate::response::Response;
 
-const MAX_PAGE_SIZE: &'static str = "20";
+const MAX_PAGE_SIZE: &str = "20";
 
 type SurfError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -137,7 +136,7 @@ where
             let future_response = self.client.get(&photo.url);
 
             let (file, response) = join!(future_file, future_response);
-            let (mut file, mut response) = (file?, response?);
+            let (mut file, response) = (file?, response?);
             let reader = BufReader::with_capacity(32_768, response);
             reader.copy_buf_into(&mut file).await?;
         }

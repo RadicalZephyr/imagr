@@ -3,10 +3,7 @@ use std::{env, process};
 use failure::Error;
 use failure_derive::Fail;
 
-use futures::future::{join_all, FutureExt, TryFutureExt};
-
-use hyper::{self, client::HttpConnector, Client};
-use hyper_tls::{self, HttpsConnector};
+use futures::future::join_all;
 
 use pretty_env_logger;
 
